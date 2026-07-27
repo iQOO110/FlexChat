@@ -18,8 +18,14 @@ RUN mvn package -DskipTests -B
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
+# 拷贝后端 jar
 COPY --from=backend-builder /build/target/*.jar app.jar
+
+# 拷贝前端静态文件
 COPY --from=frontend-builder /build/dist /app/static
 
+# 暴露端口（Vercel 会注入 PORT 环境变量）
 EXPOSE 8080
-CMD ["java", "-jar", "app.jar"]
+
+# 启动命令 — 使用 $PORT
+CMD java -jar app.jar --server.port=${PORT:-8080}
