@@ -1,3 +1,4 @@
+import { fetchModels } from '../services/apiClient'
 import { useState } from 'react'
 import { useSettings } from '../context/SettingsContext'
 
