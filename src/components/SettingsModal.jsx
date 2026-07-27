@@ -1,6 +1,6 @@
-import { fetchModels } from '../services/apiClient'
 import { useState } from 'react'
 import { useSettings } from '../context/SettingsContext'
+import { fetchModels } from '../services/apiClient'
 
 export default function SettingsModal({ onClose }) {
   const {
@@ -17,37 +17,36 @@ export default function SettingsModal({ onClose }) {
   const [error, setError] = useState('')
   const [showManual, setShowManual] = useState(false)
 
-  // ==================== 获取模型 ====================
   const handleFetchModels = async () => {
-  if (!tempBaseUrl || !tempApiKey) {
-    setError('请填写 Base URL 和 API Key')
-    return
-  }
-  setLoading(true)
-  setError('')
-  setModels([])
-
-  try {
-    const result = await fetchModels(tempBaseUrl, tempApiKey)
-
-    if (result.success && result.data?.length > 0) {
-      setModels(result.data)
-      if (!result.data.includes(tempModel)) {
-        setTempModel(result.data[0])
-      }
-    } else {
-      setError(`获取失败：${result.error}`)
-      setShowManual(true)
+    if (!tempBaseUrl || !tempApiKey) {
+      setError('请填写 Base URL 和 API Key')
+      return
     }
-  } catch (e) {
-    setError(`请求失败：${e.message}。可手动输入模型名`)
-    setShowManual(true)
-  } finally {
-    setLoading(false)
-  }
-}
+    setLoading(true)
+    setError('')
+    setModels([])
+    setShowManual(false)
 
-  // ==================== 保存 ====================
+    try {
+      const result = await fetchModels(tempBaseUrl, tempApiKey)
+
+      if (result.success && result.data?.length > 0) {
+        setModels(result.data)
+        if (!result.data.includes(tempModel)) {
+          setTempModel(result.data[0])
+        }
+      } else {
+        setError(`获取失败：${result.error}`)
+        setShowManual(true)
+      }
+    } catch (e) {
+      setError(`请求失败：${e.message}。可手动输入模型名`)
+      setShowManual(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSave = () => {
     setBaseUrl(tempBaseUrl)
     setApiKey(tempApiKey)
@@ -64,7 +63,6 @@ export default function SettingsModal({ onClose }) {
         className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 标题 */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-800">设置</h2>
           <button
@@ -112,7 +110,7 @@ export default function SettingsModal({ onClose }) {
             {loading ? '获取中...' : '获取模型'}
           </button>
 
-          {/* 错误提示（红色背景，手机上醒目） */}
+          {/* 错误提示 */}
           {error && (
             <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-600 break-all">{error}</p>
