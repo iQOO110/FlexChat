@@ -1,8 +1,0 @@
-
-server:
-  port: ${PORT:8080}
-
-spring:
-  web:
-    resources:
-      static-locations: classpath:/static/,file:/app/static/
