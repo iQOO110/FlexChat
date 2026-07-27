@@ -19,40 +19,33 @@ export default function SettingsModal({ onClose }) {
 
   // ==================== 获取模型 ====================
   const handleFetchModels = async () => {
-    if (!tempBaseUrl || !tempApiKey) {
-      setError('请填写 Base URL 和 API Key')
-      return
-    }
-    setLoading(true)
-    setError('')
-    setModels([])
-
-    try {
-      const res = await fetch('/api/v1/models', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ baseUrl: tempBaseUrl, apiKey: tempApiKey }),
-      })
-      const json = await res.json()
-
-      if (json.code === 200 && Array.isArray(json.data) && json.data.length > 0) {
-        setModels(json.data)
-        if (!json.data.includes(tempModel)) {
-          setTempModel(json.data[0])
-        }
-        setError('')
-      } else {
-        // 获取失败 — 提示用户可手动输入
-        setError(`获取失败（${json.code}）：${json.message || '未知错误'}。可点下方「手动输入模型名」`)
-        setShowManual(true)
-      }
-    } catch (e) {
-      setError('网络错误: ' + e.message)
-      setShowManual(true)
-    } finally {
-      setLoading(false)
-    }
+  if (!tempBaseUrl || !tempApiKey) {
+    setError('请填写 Base URL 和 API Key')
+    return
   }
+  setLoading(true)
+  setError('')
+  setModels([])
+
+  try {
+    const result = await fetchModels(tempBaseUrl, tempApiKey)
+
+    if (result.success && result.data?.length > 0) {
+      setModels(result.data)
+      if (!result.data.includes(tempModel)) {
+        setTempModel(result.data[0])
+      }
+    } else {
+      setError(`获取失败：${result.error}`)
+      setShowManual(true)
+    }
+  } catch (e) {
+    setError(`请求失败：${e.message}。可手动输入模型名`)
+    setShowManual(true)
+  } finally {
+    setLoading(false)
+  }
+}
 
   // ==================== 保存 ====================
   const handleSave = () => {
