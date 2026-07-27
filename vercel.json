@@ -6,4 +6,10 @@
       "use": "@vercel/docker"
     }
   ]
+"git": {
+    "deploymentEnabled": false
+  },
+  "github": {
+    "silent": true
+  }
 }
