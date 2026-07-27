@@ -1,30 +1,42 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ code: 405, message: 'Method Not Allowed' })
+    return res.status(200).json({ code: 405, message: 'Method Not Allowed' })
   }
 
-  const { baseUrl, apiKey } = req.body
+  let body = req.body
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body) } catch { body = {} }
+  }
+
+  const { baseUrl, apiKey } = body || {}
 
   if (!baseUrl || !apiKey) {
     return res.status(200).json({ code: 400, message: 'baseUrl 和 apiKey 不能为空' })
   }
 
-  try {
-    const url = baseUrl.replace(/\/+$/, '') + '/models'
+  const url = baseUrl.replace(/\/+$/, '') + '/models'
 
+  try {
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
+        'User-Agent': 'FlexChat/1.0',
       },
     })
 
     if (!response.ok) {
       let errMsg = `上游返回 ${response.status}`
       try {
-        const errBody = await response.json()
-        errMsg = errBody?.error?.message || errMsg
-      } catch {}
-      return res.status(200).json({ code: 500, message: errMsg })
+        const errText = await response.text()
+        const errJson = JSON.parse(errText)
+        errMsg = errJson?.error?.message || errText.substring(0, 200) || errMsg
+      } catch {
+        try {
+          const raw = await response.text()
+          if (raw) errMsg = raw.substring(0, 200)
+        } catch {}
+      }
+      return res.status(200).json({ code: response.status, message: errMsg })
     }
 
     const data = await response.json()
