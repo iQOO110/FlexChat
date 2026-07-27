@@ -1,8 +1,9 @@
 {
-"version": 2,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ],
+  "functions": {
+    "api/v1/chat/completions.js": {
+      "maxDuration": 60
+    }
+  },
 "git": {
     "deploymentEnabled": false
   },
