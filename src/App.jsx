@@ -12,18 +12,14 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const messagesEndRef = useRef(null)
 
-  // 首次加载未配置则自动弹设置
   useEffect(() => {
     if (!isConfigured) setShowSettings(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // 自动滚到底部
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // ==================== 发送消息 ====================
   const handleSend = async (text) => {
     if (!isConfigured) {
       setShowSettings(true)
@@ -32,8 +28,6 @@ export default function App() {
 
     const userMessage = { role: 'user', content: text }
     const assistantMessage = { role: 'assistant', content: '', isStreaming: true }
-
-    // 前端维护上下文，整包发送
     const allMessages = [...messages, userMessage]
     setMessages([...allMessages, assistantMessage])
     setIsStreaming(true)
@@ -53,14 +47,15 @@ export default function App() {
         }),
       })
 
+      // HTTP 错误（非 200）
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`)
-      }
-      if (!res.body) {
-        throw new Error('响应体为空')
+        let errBody = ''
+        try { errBody = await res.text() } catch {}
+        throw new Error(`HTTP ${res.status}${errBody ? ': ' + errBody.substring(0, 300) : ''}`)
       }
 
-      // 读取 ReadableStream → 逐块解析 SSE data 行
+      if (!res.body) throw new Error('响应体为空')
+
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
@@ -71,7 +66,7 @@ export default function App() {
 
         buffer += decoder.decode(value, { stream: true })
         const lines = buffer.split('\n')
-        buffer = lines.pop() // 保留不完整行
+        buffer = lines.pop()
 
         for (const line of lines) {
           if (!line.startsWith('data:')) continue
@@ -83,12 +78,11 @@ export default function App() {
             const chunk = JSON.parse(data)
 
             if (chunk.error) {
-              fullContent += `\n[错误] ${chunk.error.message || JSON.stringify(chunk.error)}`
+              fullContent += `[错误] ${chunk.error.message || JSON.stringify(chunk.error)}`
             } else if (chunk.choices?.[0]?.delta?.content) {
               fullContent += chunk.choices[0].delta.content
             }
 
-            // 更新 AI 消息内容
             setMessages((prev) => {
               const updated = [...prev]
               updated[updated.length - 1] = {
@@ -98,13 +92,11 @@ export default function App() {
               }
               return updated
             })
-          } catch {
-            // 忽略解析错误
-          }
+          } catch {}
         }
       }
 
-      // 流式结束
+      // 流结束
       setMessages((prev) => {
         const updated = [...prev]
         updated[updated.length - 1] = {
@@ -129,23 +121,15 @@ export default function App() {
     }
   }
 
-  // ==================== 渲染 ====================
   return (
     <div className="flex flex-col h-screen bg-white">
       <Header onOpenSettings={() => setShowSettings(true)} />
 
-      {/* 消息区 */}
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto py-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-gray-400 py-20">
-              <svg
-                className="w-16 h-16 mb-4 text-gray-300"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              >
+              <svg className="w-16 h-16 mb-4 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
               <p className="text-lg font-medium text-gray-500">FlexChat</p>
@@ -158,10 +142,7 @@ export default function App() {
         </div>
       </main>
 
-      {/* 底部输入 */}
       <ChatInput onSend={handleSend} disabled={isStreaming} />
-
-      {/* 设置弹窗 */}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   )
