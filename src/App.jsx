@@ -1,6 +1,6 @@
-import { fetchChat } from './services/apiClient'
 import { useState, useRef, useEffect } from 'react'
 import { useSettings } from './context/SettingsContext'
+import { fetchChat } from './services/apiClient'
 import Header from './components/Header'
 import SettingsModal from './components/SettingsModal'
 import ChatMessage from './components/ChatMessage'
@@ -83,7 +83,6 @@ export default function App() {
         }
       }
 
-      // 流结束
       setMessages((prev) => {
         const updated = [...prev]
         updated[updated.length - 1] = {
