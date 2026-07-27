@@ -1,3 +1,4 @@
+import { fetchChat } from './services/apiClient'
 import { useState, useRef, useEffect } from 'react'
 import { useSettings } from './context/SettingsContext'
 import Header from './components/Header'
@@ -35,26 +36,12 @@ export default function App() {
     let fullContent = ''
 
     try {
-      const res = await fetch('/api/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          baseUrl,
-          apiKey,
-          model: selectedModel,
-          messages: allMessages.map((m) => ({ role: m.role, content: m.content })),
-          stream: true,
-        }),
-      })
-
-      // HTTP 错误（非 200）
-      if (!res.ok) {
-        let errBody = ''
-        try { errBody = await res.text() } catch {}
-        throw new Error(`HTTP ${res.status}${errBody ? ': ' + errBody.substring(0, 300) : ''}`)
-      }
-
-      if (!res.body) throw new Error('响应体为空')
+      const { response: res } = await fetchChat(
+        baseUrl,
+        apiKey,
+        selectedModel,
+        allMessages
+      )
 
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
